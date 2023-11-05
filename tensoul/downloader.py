@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import hmac
 import random
@@ -89,6 +90,34 @@ class MajsoulPaipuDownloader:
             raise MajsoulLoginError(res)
 
         self.token = token
+
+    def start_server(self, host, port):
+        from flask import Flask, request
+        from tornado.wsgi import WSGIContainer
+        from tornado.httpserver import HTTPServer
+        from tornado.ioloop import IOLoop
+        import ujson as json
+
+        app = Flask(__name__)
+        downloader = self
+
+        def make_json_response(data):
+            return app.response_class(response=json.dumps(data),
+                                      mimetype='application/json')
+
+        @app.route("/convert/", methods=['GET'])
+        def convert():
+            id = request.args.get('id')
+            if id:
+                log = asyncio.run(downloader.download(id))
+                return make_json_response(log)
+            return "replay id required!"
+
+        http_server = HTTPServer(WSGIContainer(app))
+        http_server.listen(port, host)
+        print("==== server start at %s:%s ====" % (host, port))
+        print("The API is GET /convert?id={mahjong_soul_log_id}")
+        IOLoop.instance().start()
 
     async def download(self, record_uuid: str):
         req = pb.ReqGameRecord()
