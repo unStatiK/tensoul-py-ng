@@ -221,4 +221,16 @@ class MajsoulPaipuDownloader:
 
                 res["log"] = [e.dump() for e in converter.getvalue()]
 
+        res["playerMapping"] = self._preparePlayerMapping(record)
+
         return res
+
+    def _preparePlayerMapping(self, record):
+        seatPlayerMapping = {}
+        for account in record.head.accounts:
+            seatPlayerMapping[int(account.seat)] = {'nickname': account.nickname, 'account_id': account.account_id}
+
+        playerMapping = []
+        for result in record.head.result.players:
+            playerMapping.append(seatPlayerMapping[int(result.seat)])
+        return playerMapping
