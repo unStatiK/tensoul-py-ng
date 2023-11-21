@@ -201,7 +201,7 @@ class MajsoulPaipuDownloader:
             res["sc"][2 * e[0] + 1] = e[2]
 
         # optional title - why not give the room and put the timestamp here
-        res["title"] = [ruledisp + lobby, datetime.fromtimestamp(record.head.end_time).strftime("%Y-%m-%d %H:%M:%S")]
+        res["title"] = [ruledisp + lobby, record.head.end_time]
 
         wrapper = pb.Wrapper()
         wrapper.ParseFromString(record.data)
