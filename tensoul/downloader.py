@@ -3,7 +3,6 @@ import hashlib
 import hmac
 import random
 import uuid
-from datetime import datetime
 
 import aiohttp
 import ms.protocol_pb2 as pb
@@ -71,6 +70,20 @@ class MajsoulPaipuDownloader:
         self.lobby = Lobby(self.channel)
 
         await self.channel.connect(self.MS_HOST)
+        asyncio.create_task(self.sustain())
+
+    async def sustain(self, ping_interval=3):
+        '''
+        Looping coroutine that keeps the connection to the server alive.
+        '''
+        try:
+            while self.channel._ws.open:
+                await self.channel._ws.ping()
+                await asyncio.sleep(ping_interval)
+        except asyncio.CancelledError:
+            print("`sustain` task cancelled")
+        except Exception as e:
+            print(f"Exception occurred in `sustain` task: {e}")
 
     async def login(self, username, password):
         uuid_key = str(uuid.uuid1())
@@ -104,6 +117,11 @@ class MajsoulPaipuDownloader:
         def make_json_response(data):
             return app.response_class(response=json.dumps(data),
                                       mimetype='application/json')
+
+        @app.route("/health/", methods=['GET'])
+        def health():
+            status = 'OK' if self.channel._ws.open else 'ERROR'
+            return make_json_response({'status': status})
 
         @app.route("/convert/", methods=['GET'])
         def convert():
