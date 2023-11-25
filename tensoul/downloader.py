@@ -10,7 +10,7 @@ from ms.base import MSRPCChannel
 from ms.rpc import Lobby
 from websockets.exceptions import ConnectionClosedError
 
-from .cfg import cfg
+from .cfg import cfg, ms_cfg
 from .constants import RUNES, JPNAME
 from .parser import MajsoulPaipuParser
 
@@ -53,8 +53,11 @@ class MajsoulPaipuDownloader:
 
             async with session.get("{}/1/v{}/config.json".format(self.MS_HOST, self.version)) as res:
                 config = await res.json()
-
-                url = config["ip"][0]["region_urls"][1]["url"]
+                default_gate = 1
+                regions = config["ip"][0]["region_urls"]
+                config_region_index = ms_cfg['connect_region_number'] - 1
+                region_index = config_region_index if len(regions) > config_region_index else default_gate
+                url = regions[region_index]["url"]
 
             async with session.get(url + "?service=ws-gateway&protocol=ws&ssl=true") as res:
                 servers = await res.json()
