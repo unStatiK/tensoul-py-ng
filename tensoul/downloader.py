@@ -248,8 +248,24 @@ class MajsoulPaipuDownloader:
 
     def _preparePlayerMapping(self, record):
         seatPlayerMapping = {}
+        botsMapping = {
+            0: {'nickname': 'AI1', 'account_id': -1001},
+            1: {'nickname': 'AI2', 'account_id': -1002},
+            2: {'nickname': 'AI3', 'account_id': -1003},
+            3: {'nickname': 'AI4', 'account_id': -1004}
+        }
         for account in record.head.accounts:
-            seatPlayerMapping[int(account.seat)] = {'nickname': account.nickname, 'account_id': account.account_id}
+            current_seat = int(account.seat)
+            if current_seat in botsMapping:
+                del botsMapping[current_seat]
+            seatPlayerMapping[current_seat] = {'nickname': account.nickname, 'account_id': account.account_id}
+
+        #normalize AI name for pantheon
+        bot_index = 1
+        for key, value in botsMapping.items():
+            value['nickname'] = "AI%d" % bot_index
+            seatPlayerMapping[int(key)] = value
+            bot_index = bot_index + 1
 
         playerMapping = []
         for result in record.head.result.players:
