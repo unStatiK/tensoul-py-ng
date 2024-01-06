@@ -130,8 +130,8 @@ class MajsoulPaipuDownloader:
         def convert():
             id = request.args.get('id')
             if id:
-                log = asyncio.run(downloader.download(id))
-                return make_json_response(log)
+                response = asyncio.run(downloader.download(id))
+                return make_json_response(response)
             return "replay id required!"
 
         http_server = HTTPServer(WSGIContainer(app))
@@ -147,9 +147,10 @@ class MajsoulPaipuDownloader:
         res = await self.lobby.fetch_game_record(req)
 
         if res.error.code:
-            raise MajsoulDownloadError(code=res.error.code)
+            return {"is_error": True, "log": None}
+            #raise MajsoulDownloadError(code=res.error.code)
 
-        return self._handle_game_record(res)
+        return {"is_error": False, "log": self._handle_game_record(res)}
 
     def _handle_game_record(self, record):
         res = {}
@@ -260,12 +261,15 @@ class MajsoulPaipuDownloader:
                 del botsMapping[current_seat]
             seatPlayerMapping[current_seat] = {'nickname': account.nickname, 'account_id': account.account_id}
 
-        #normalize AI name for pantheon
+        #normalize AI name and id for pantheon
         bot_index = 1
+        bot_account_id = -1001
         for key, value in botsMapping.items():
             value['nickname'] = "AI%d" % bot_index
+            value['account_id'] = bot_account_id
             seatPlayerMapping[int(key)] = value
             bot_index = bot_index + 1
+            bot_account_id  = bot_account_id - 1
 
         playerMapping = []
         for result in record.head.result.players:
