@@ -272,6 +272,6 @@ class MajsoulPaipuDownloader:
             bot_account_id  = bot_account_id - 1
 
         playerMapping = []
-        for result in record.head.result.players:
-            playerMapping.append(seatPlayerMapping[int(result.seat)])
+        for result_seat in range(len(record.head.result.players)):
+            playerMapping.append(seatPlayerMapping[int(result_seat)])
         return playerMapping
