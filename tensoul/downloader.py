@@ -194,7 +194,7 @@ class MajsoulPaipuDownloader:
                            "aka51": 1 if nplayers == 4 else 0}
 
         # tenhou custom lobby - could be tourney id or friendly room for mjs. appending to title instead to avoid 3->C etc. in tenhou.net/5
-        res["lobby"] = 0
+        res["lobby"] = ms_cfg['lobby']
 
         # autism to fix logs with AI
         # ranks

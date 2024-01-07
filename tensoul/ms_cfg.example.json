@@ -3,5 +3,6 @@
   "ms_password" : "password",
   "server_host" : "127.0.0.1",
   "server_port" : "8080",
-  "connect_region_number": 1
+  "connect_region_number": 1,
+  "lobby": 0
 }
