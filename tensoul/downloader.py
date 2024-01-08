@@ -121,6 +121,15 @@ class MajsoulPaipuDownloader:
             return app.response_class(response=json.dumps(data),
                                       mimetype='application/json')
 
+        def prepare_lobby_id(lobby_id):
+            if not lobby_id:
+                lobby_id = 0
+            else:
+                lobby_id = int(lobby_id)
+                if lobby_id < 0:
+                    lobby_id = 0
+            return lobby_id
+
         @app.route("/health/", methods=['GET'])
         def health():
             status = 'OK' if self.channel._ws.open else 'ERROR'
@@ -129,10 +138,11 @@ class MajsoulPaipuDownloader:
         @app.route("/convert/", methods=['GET'])
         def convert():
             id = request.args.get('id')
+            lobby_id = prepare_lobby_id(request.args.get('lobby_id'))
             if id:
-                response = asyncio.run(downloader.download(id))
+                response = asyncio.run(downloader.download(id, lobby_id))
                 return make_json_response(response)
-            return "replay id required!"
+            return make_json_response({"is_error": True, "error_msg": "replay id required!"})
 
         http_server = HTTPServer(WSGIContainer(app))
         http_server.listen(port, host)
@@ -140,19 +150,18 @@ class MajsoulPaipuDownloader:
         print("The API is GET /convert?id={mahjong_soul_log_id}")
         IOLoop.instance().start()
 
-    async def download(self, record_uuid: str):
+    async def download(self, record_uuid: str, lobby_id: int):
         req = pb.ReqGameRecord()
         req.game_uuid = record_uuid
         req.client_version_string = f'web-{self.version_to_force}'
         res = await self.lobby.fetch_game_record(req)
 
         if res.error.code:
-            return {"is_error": True, "log": None}
-            #raise MajsoulDownloadError(code=res.error.code)
+            return {"is_error": True, "error_code": res.error.code}
 
-        return {"is_error": False, "log": self._handle_game_record(res)}
+        return {"is_error": False, "log": self._handle_game_record(res, lobby_id)}
 
-    def _handle_game_record(self, record):
+    def _handle_game_record(self, record, lobby_id):
         res = {}
         ruledisp = ""
         lobby = ""  # usually 0, is the custom lobby number
@@ -194,7 +203,11 @@ class MajsoulPaipuDownloader:
                            "aka51": 1 if nplayers == 4 else 0}
 
         # tenhou custom lobby - could be tourney id or friendly room for mjs. appending to title instead to avoid 3->C etc. in tenhou.net/5
-        res["lobby"] = ms_cfg['lobby']
+        room_id = int(record.head.config.meta.room_id)
+        if room_id > 0:
+            res["lobby"] = room_id
+        else:
+            res["lobby"] = lobby_id
 
         # autism to fix logs with AI
         # ranks
@@ -261,7 +274,7 @@ class MajsoulPaipuDownloader:
                 del botsMapping[current_seat]
             seatPlayerMapping[current_seat] = {'nickname': account.nickname, 'account_id': account.account_id}
 
-        #normalize AI name and id for pantheon
+        # normalize AI name and id for pantheon
         bot_index = 1
         bot_account_id = -1001
         for key, value in botsMapping.items():
@@ -269,7 +282,7 @@ class MajsoulPaipuDownloader:
             value['account_id'] = bot_account_id
             seatPlayerMapping[int(key)] = value
             bot_index = bot_index + 1
-            bot_account_id  = bot_account_id - 1
+            bot_account_id = bot_account_id - 1
 
         playerMapping = []
         for result_seat in range(len(record.head.result.players)):
