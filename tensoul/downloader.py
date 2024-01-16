@@ -26,6 +26,7 @@ class MajsoulDownloadError(BaseException):
 
 class MajsoulPaipuDownloader:
     MS_HOST = "https://game.maj-soul.com"
+    MS_LOGIN_BEAT_CONTRACT_UUID = "DF2vkXCnfeXp4WoGSBGNcJBufZiMN3UP"
 
     async def start(self):
         await self._connect()
@@ -73,15 +74,22 @@ class MajsoulPaipuDownloader:
         self.lobby = Lobby(self.channel)
 
         await self.channel.connect(self.MS_HOST)
-        asyncio.create_task(self.sustain())
+        asyncio.create_task(self.sustain(lobby=self.lobby))
 
-    async def sustain(self, ping_interval=3):
+    async def sustain(self, lobby, ping_interval=4):
         '''
         Looping coroutine that keeps the connection to the server alive.
         '''
         try:
             while self.channel._ws.open:
+                # first ping ws socket
                 await self.channel._ws.ping()
+                # second call in-game heartbeat
+                req_heatbeat = pb.ReqHeatBeat()
+                req_heatbeat.no_operation_counter = 0
+                res_heatbeat = await lobby.heatbeat(req_heatbeat)
+                if int(res_heatbeat.error.ByteSize()) > 0:
+                    await self.channel.close()
                 await asyncio.sleep(ping_interval)
         except asyncio.CancelledError:
             print("`sustain` task cancelled")
@@ -105,6 +113,11 @@ class MajsoulPaipuDownloader:
         if not token:
             raise MajsoulLoginError(res)
 
+        req_login_success = pb.ReqCommon()
+        await self.lobby.login_success(req_login_success)
+        req_login_beat = pb.ReqLoginBeat()
+        req_login_beat.contract = self.MS_LOGIN_BEAT_CONTRACT_UUID
+        await self.lobby.login_beat(req_login_beat)
         self.token = token
 
     def start_server(self, host, port):
