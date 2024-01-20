@@ -5,9 +5,11 @@ from tensoul.cfg import ms_cfg
 
 nest_asyncio.apply()
 
+APP_VERSION = "1.0.1"
+
 
 async def connect_and_serve():
-    downloader = MajsoulPaipuDownloader()
+    downloader = MajsoulPaipuDownloader(APP_VERSION)
     await downloader.start()
     await downloader.login(ms_cfg['ms_username'], ms_cfg['ms_password'])
     downloader.start_server(ms_cfg['server_host'], ms_cfg['server_port'])

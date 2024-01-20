@@ -28,6 +28,9 @@ class MajsoulPaipuDownloader:
     MS_HOST = "https://game.maj-soul.com"
     MS_LOGIN_BEAT_CONTRACT_UUID = "DF2vkXCnfeXp4WoGSBGNcJBufZiMN3UP"
 
+    def __init__(self, tensoul_version):
+        self.tensoul_version = tensoul_version
+
     async def start(self):
         await self._connect()
 
@@ -145,6 +148,10 @@ class MajsoulPaipuDownloader:
                 if lobby_id < 0:
                     lobby_id = 0
             return lobby_id
+
+        @app.route("/status/", methods=['GET'])
+        def status():
+            return make_json_response({'version': self.tensoul_version})
 
         @app.route("/health/", methods=['GET'])
         def health():
