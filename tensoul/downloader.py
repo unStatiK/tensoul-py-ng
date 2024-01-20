@@ -120,6 +120,9 @@ class MajsoulPaipuDownloader:
         await self.lobby.login_beat(req_login_beat)
         self.token = token
 
+    def make_error_message(self, error_msg):
+        return {"is_error": True, "error_msg": error_msg}
+
     def start_server(self, host, port):
         from flask import Flask, request
         from tornado.wsgi import WSGIContainer
@@ -155,7 +158,7 @@ class MajsoulPaipuDownloader:
             if id:
                 response = asyncio.run(downloader.download(id, lobby_id))
                 return make_json_response(response)
-            return make_json_response({"is_error": True, "error_msg": "replay id required!"})
+            return make_json_response(self.make_error_message("replay id required!"))
 
         http_server = HTTPServer(WSGIContainer(app))
         http_server.listen(port, host)
@@ -170,7 +173,7 @@ class MajsoulPaipuDownloader:
         res = await self.lobby.fetch_game_record(req)
 
         if res.error.code:
-            return {"is_error": True, "error_code": res.error.code}
+            return self.make_error_message("error_code: %s" % res.error.code)
 
         return {"is_error": False, "log": self._handle_game_record(res, lobby_id)}
 
