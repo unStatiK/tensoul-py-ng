@@ -29,6 +29,17 @@ downloader.start_server(host, port)
 
 See example.py also
 
+## Bots handle
+
+If we used bots in game then tensoul converted it to hadcoded mapping 
+
+```
+{'nickname': 'AI1', 'account_id': -1001},
+{'nickname': 'AI2', 'account_id': -1002},
+{'nickname': 'AI3', 'account_id': -1003},
+{'nickname': 'AI4', 'account_id': -1004}
+```
+
 ## Thanks
 
 https://github.com/MahjongRepository/mahjong_soul_api
