@@ -28,7 +28,7 @@ class MajsoulPaipuDownloader:
     MS_HOST = "https://game.maj-soul.com"
     MS_LOGIN_BEAT_CONTRACT_UUID = "DF2vkXCnfeXp4WoGSBGNcJBufZiMN3UP"
 
-    def __init__(self, tensoul_version):
+    def __init__(self, tensoul_version="0.0.0"):
         self.tensoul_version = tensoul_version
 
     async def start(self):
