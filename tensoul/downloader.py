@@ -134,7 +134,15 @@ class MajsoulPaipuDownloader:
         import ujson as json
 
         app = Flask(__name__)
+        app_token = ms_cfg['app_token']
+        is_token_auth = ms_cfg['is_token_auth']
         downloader = self
+
+        def check_token(request):
+            if is_token_auth:
+                request_token = request.args.get('app_token')
+                return app_token == request_token
+            return True
 
         def make_json_response(data):
             return app.response_class(response=json.dumps(data),
@@ -160,6 +168,8 @@ class MajsoulPaipuDownloader:
 
         @app.route("/convert/", methods=['GET'])
         def convert():
+            if not check_token(request):
+                return make_json_response(self.make_error_message("app_token not valid!"))
             id = request.args.get('id')
             lobby_id = prepare_lobby_id(request.args.get('lobby_id'))
             if id:
@@ -170,7 +180,10 @@ class MajsoulPaipuDownloader:
         http_server = HTTPServer(WSGIContainer(app))
         http_server.listen(port, host)
         print("==== server start at %s:%s ====" % (host, port))
-        print("The API is GET /convert?id={mahjong_soul_log_id}")
+        if is_token_auth:
+            print("The API is GET /convert?id={mahjong_soul_log_id}&app_token={app_token}")
+        else:
+            print("The API is GET /convert?id={mahjong_soul_log_id}")
         IOLoop.instance().start()
 
     async def download(self, record_uuid: str, lobby_id: int):
