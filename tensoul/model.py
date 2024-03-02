@@ -261,7 +261,10 @@ class Yaku:
 
     def name(self, round: Round, seat: int) -> str:
         if self.id == 10:
-            return f"{RUNES['jikaze'][JPNAME]} {RUNES[self.WIND[round.kyoku - 1]][JPNAME]}"
+            try:
+                return f"{RUNES['jikaze'][JPNAME]} {RUNES[self.WIND[round.kyoku - 1]][JPNAME]}"
+            except Exception:
+                return f"{RUNES['jikaze'][JPNAME]} {RUNES[self.WIND[(seat + round.kyoku) % 4]][JPNAME]}"
         if self.id == 11:
             return f"{RUNES['bakaze'][JPNAME]} {RUNES[self.WIND[round.kyoku // 4]][JPNAME]}"
         elif self.id == 18:
