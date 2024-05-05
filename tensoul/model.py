@@ -255,17 +255,23 @@ class AgariPoint(NamedTuple):
 @dataclass
 class Yaku:
     WIND = ['east', 'south', 'west', 'north']
+    SEAT_WIND_MAP = [
+        ['east', 'south', 'west', 'north'],
+        ['north', 'east', 'south', 'west'],
+        ['west', 'north', 'east', 'south'],
+        ['south', 'west', 'north', 'east']
+    ]
 
     id: int
     val: int
 
     def name(self, round: Round, seat: int) -> str:
         if self.id == 10:
-            try:
-                return f"{RUNES['jikaze'][JPNAME]} {RUNES[self.WIND[round.kyoku - 1]][JPNAME]}"
-            except Exception:
-                return f"{RUNES['jikaze'][JPNAME]} {RUNES[self.WIND[(seat + round.kyoku) % 4]][JPNAME]}"
+            # seat wind
+            round_number_index = round.kyoku % 4
+            return f"{RUNES['jikaze'][JPNAME]} {RUNES[self.SEAT_WIND_MAP[round_number_index][seat]][JPNAME]}"
         if self.id == 11:
+            # round wind
             return f"{RUNES['bakaze'][JPNAME]} {RUNES[self.WIND[round.kyoku // 4]][JPNAME]}"
         elif self.id == 18:
             return RUNES['dabururiichi'][JPNAME]
