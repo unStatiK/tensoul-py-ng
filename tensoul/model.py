@@ -201,12 +201,19 @@ class SpecialRyukyoku(IntEnum):
 class Ryukyoku(NamedTuple):
     delta: list[int]
     nagashimangan: bool
+    all_noten: bool
+    all_tempai: bool
 
     def dump(self) -> Sequence:
         if self.nagashimangan:
             return RUNES["nagashimangan"][JPNAME], self.delta
         else:
-            return RUNES["ryuukyoku"][JPNAME], self.delta
+            if self.all_noten:
+                return RUNES["all_noten"][JPNAME], self.delta
+            elif self.all_tempai:
+                return RUNES["all_tempai"][JPNAME], self.delta
+            else:
+                return RUNES["ryuukyoku"][JPNAME], self.delta
 
 
 class AgariPointLevel(IntEnum):

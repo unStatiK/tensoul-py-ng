@@ -30,6 +30,8 @@ RUNES = {
     # round enders
     "agari": ["和了", "Agari", "Agari"],
     "ryuukyoku": ["流局", "Ryuukyoku", "Exhaustive Draw"],
+    "all_tempai": ["全員聴牌", "Ryuukyoku", "All tempai"],
+    "all_noten": ["全員不聴", "Ryuukyoku", "All noten"],
     "nagashimangan": ["流し満貫", "Nagashi Mangan", "Mangan at Draw"],
     "suukaikan": ["四開槓", "Suukaikan", "Four Kan Abortion"],
     "sanchahou": ["三家和", "Sanchahou", "Three Ron Abortion"],

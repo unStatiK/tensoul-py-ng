@@ -180,14 +180,22 @@ class MajsoulPaipuParser:
 
     def _handle_no_tile(self, log):
         delta = [0, 0, 0, 0]
-        # NOTE: mjs wll not give delta_scores if everyone is (no)ten - TODO: minimize the autism
+        all_noten = False
+        all_tempai = False
+
+        if log.scores[0].delta_scores is None:
+            all_noten = True
+
+        if log.scores[0].delta_scores is not None and len(log.scores[0].delta_scores) == 0:
+            all_tempai = True
+
         if log.scores[0].delta_scores is not None and len(log.scores[0].delta_scores) != 0:
             for score in log.scores:
                 for i, g in enumerate(score.delta_scores):
                     # for the rare case of multiple nagashi, we sum the arrays
                     delta[i] += g
 
-        self.cur.result = Ryukyoku(delta, getattr(log, "liujumanguan", False))
+        self.cur.result = Ryukyoku(delta, getattr(log, "liujumanguan", False), all_noten, all_tempai)
 
         self.kyokus.append(self.cur)
         self.cur = None
