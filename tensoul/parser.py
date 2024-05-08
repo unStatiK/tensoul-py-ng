@@ -170,7 +170,7 @@ class MajsoulPaipuParser:
             self.cur.result = SpecialRyukyoku.sufonrenda
         elif self.nriichi == 4:
             self.cur.result = SpecialRyukyoku.suuchariichi
-        elif self.nkan == 4:
+        elif self.nkan == 4 or log.type == 3:
             self.cur.result = SpecialRyukyoku.suukaikan
         else:
             raise RuntimeError(f"invalid RecordLiuJu.type={log.type}")
