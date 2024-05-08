@@ -5,7 +5,7 @@ from tensoul.cfg import ms_cfg
 
 nest_asyncio.apply()
 
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
 
 
 async def connect_and_serve():
