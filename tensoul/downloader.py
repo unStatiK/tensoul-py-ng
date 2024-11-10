@@ -254,7 +254,7 @@ class MajsoulPaipuDownloader:
         # level score, no real analog to rate
         res["rate"] = [0] * nplayers
         for e in record.head.accounts:
-            res["rate"][e.seat] = e.level.score  # level score, closest thing to rate
+            res["rate"][e.seat] = e.level.score if e.level.score else 0  # level score, closest thing to rate
 
         # sex
         res["sx"] = ['C'] * nplayers
