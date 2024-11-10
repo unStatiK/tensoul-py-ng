@@ -209,19 +209,22 @@ class MajsoulPaipuParser:
         else:
             return 0
 
-    def _parse_hu_le(self, hule) -> SingleAgari:
+    def _parse_hu_le(self, hule, is_head_bump) -> SingleAgari:
         # tenhou log viewer requires 点, 飜) or 役満) to end strings, rest of scoring string is entirely optional
         delta = []  # we need to compute the delta ourselves to handle double/triple ron
         points = None
 
-        # riichi stick points, -1 means already taken
-        if self.nriichi != -1:
+        # riichi stick points
+        if is_head_bump:
             rp = 1000 * (self.nriichi + self.cur.round.riichi_sticks)
         else:
             rp = 0
 
         # base honba payment
-        hb = 100 * self.cur.round.honba
+        if is_head_bump:
+            hb = 100 * self.cur.round.honba
+        else:
+            hb = 0
 
         # sekinin barai logic
         pao = False
@@ -305,12 +308,14 @@ class MajsoulPaipuParser:
     def _handle_hu_le(self, log):
         agari = []
         ura = []
+        is_head_bump = True
 
         # take the longest ura list - double ron with riichi + dama
         for f in log.hules:
             if f.li_doras is not None and len(ura) < len(f.li_doras):
                 ura = [Tile.parse(t) for t in f.li_doras]
-            agari.append(self._parse_hu_le(f))
+            agari.append(self._parse_hu_le(f, is_head_bump))
+            is_head_bump = False
 
         self.cur.result = Agari(agari=agari, uras=ura, round=self.cur.round)
 
