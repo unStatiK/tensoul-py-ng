@@ -10,7 +10,7 @@ Tensoul format is backward compatibility with original tenhou.net/6 format.
 
 ## Usage
 
-You need to have an account from CN server, because only accounts from CN server has the ability to login with username and password.
+You need to have an account from CN server, because only accounts from CN server have the ability to login with username and password.
 
 ```python
 from tensoul import MajsoulPaipuDownloader

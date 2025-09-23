@@ -109,7 +109,7 @@ class MajsoulPaipuParser:
                 self.paowind = feeder
         elif 5 <= tile.num <= 7:
             self.nodrags[owner] += 1
-            if self.nodrags[owner] == 4:
+            if self.nodrags[owner] == 3:
                 self.paodrag = feeder
 
     def _handle_chi_peng_gang(self, log):
@@ -150,7 +150,7 @@ class MajsoulPaipuParser:
             # kakan
             # find pon and swap in new symbol
             for sy in self.cur.draws[log.seat]:
-                if isinstance(sy, PonSymbol) and (sy.tile == tile or sy.tile == tile.deaka()):
+                if isinstance(sy, PonSymbol) and (sy.tile.deaka() == tile.deaka()):
                     self.cur.discards[log.seat].append(KakanSymbol(sy.a, sy.b, sy.tile, tile, sy.feeder_relative))
                     self.nkan += 1
                     break
@@ -214,6 +214,8 @@ class MajsoulPaipuParser:
         delta = []  # we need to compute the delta ourselves to handle double/triple ron
         points = None
 
+        # riichi stick points and base honba payment, -1 means already taken
+        if self.nriichi != -1:
         # riichi stick points
         if is_head_bump:
             rp = 1000 * (self.nriichi + self.cur.round.riichi_sticks)
