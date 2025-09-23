@@ -214,8 +214,6 @@ class MajsoulPaipuParser:
         delta = []  # we need to compute the delta ourselves to handle double/triple ron
         points = None
 
-        # riichi stick points and base honba payment, -1 means already taken
-        if self.nriichi != -1:
         # riichi stick points
         if is_head_bump:
             rp = 1000 * (self.nriichi + self.cur.round.riichi_sticks)
