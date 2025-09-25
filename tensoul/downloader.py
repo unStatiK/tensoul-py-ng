@@ -8,6 +8,7 @@ import aiohttp
 import ms.protocol_pb2 as pb
 from ms.base import MSRPCChannel
 from ms.rpc import Lobby
+from websockets import State
 from websockets.exceptions import ConnectionClosedError
 
 from .cfg import cfg, ms_cfg
@@ -58,20 +59,19 @@ class MajsoulPaipuDownloader:
             async with session.get("{}/1/v{}/config.json".format(self.MS_HOST, self.version)) as res:
                 config = await res.json()
                 default_gate = 1
-                regions = config["ip"][0]["region_urls"]
+                regions = config["ip"][0]["gateways"]
                 config_region_index = ms_cfg['connect_region_number'] - 1
                 region_index = config_region_index if len(regions) > config_region_index else default_gate
                 url = regions[region_index]["url"]
 
-            async with session.get(url + "?service=ws-gateway&protocol=ws&ssl=true") as res:
-                servers = await res.json()
-
-                if "servers" in servers:
-                    servers = servers["servers"]
-                    server = random.choice(servers)
-                    self.endpoint = "wss://{}/gateway".format(server)
-                else:
-                    raise RuntimeError("Cannot detect endpoint. Response: " + await res.text())
+            async with session.get("{}/api/clientgate/routes?platform=Web&version={}".format(url, self.version)) as res:
+               routes = await res.json()
+               if "routes" in routes['data']:
+                   routes = routes['data']["routes"]
+                   server = random.choice(routes)
+                   self.endpoint = "wss://{}/gateway".format(server['domain'])
+               else:
+                   raise RuntimeError("Cannot detect endpoint. Response: " + await res.text())
 
         self.channel = MSRPCChannel(self.endpoint)
         self.lobby = Lobby(self.channel)
@@ -84,7 +84,8 @@ class MajsoulPaipuDownloader:
         Looping coroutine that keeps the connection to the server alive.
         '''
         try:
-            while self.channel._ws.open:
+            #todo: recovery heartbeat task, temporary disable
+            while self.channel._ws.state != State.OPEN:
                 # first ping ws socket
                 await self.channel._ws.ping()
                 # second call in-game heartbeat
