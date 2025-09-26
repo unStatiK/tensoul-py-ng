@@ -94,13 +94,15 @@ class MajsoulPaipuDownloader:
             await channel.close()
             raise RuntimeError("request connection for route {} failed".format(route_id))
 
+    def is_channel_connection_open(self, channel) -> bool:
+        return channel._ws.state == State.OPEN
+
     async def sustain(self, route, ping_interval=4):
         '''
         Looping coroutine that keeps the connection to the server alive.
         '''
         try:
-            #todo: recovery heartbeat task, temporary disable
-            while self.channel._ws.state == State.OPEN:
+            while self.is_channel_connection_open(self.channel):
                 # first ping ws socket
                 await self.channel._ws.ping()
                 # second call in-game heartbeat
@@ -182,7 +184,7 @@ class MajsoulPaipuDownloader:
 
         @app.route("/health/", methods=['GET'])
         def health():
-            status = 'OK' if self.channel._ws.open else 'ERROR'
+            status = 'OK' if self.is_channel_connection_open(self.channel) else 'ERROR'
             return make_json_response({'status': status})
 
         @app.route("/convert/", methods=['GET'])
