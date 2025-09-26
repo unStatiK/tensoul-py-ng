@@ -11,6 +11,7 @@ from ms.rpc import Lobby
 from ms.rpc import Route
 from websockets import State
 from websockets.exceptions import ConnectionClosedError
+from datetime import datetime, timezone
 
 from .cfg import cfg, ms_cfg
 from .constants import RUNES, JPNAME
@@ -71,15 +72,27 @@ class MajsoulPaipuDownloader:
                    routes = routes['data']["routes"]
                    server = random.choice(routes)
                    self.endpoint = "wss://{}/gateway".format(server['domain'])
+                   self.route_id = str(server['id']).strip()
                else:
                    raise RuntimeError("Cannot detect endpoint. Response: " + await res.text())
 
         self.channel = MSRPCChannel(self.endpoint)
         self.lobby = Lobby(self.channel)
         self.route = Route(self.channel)
-
-        await self.channel.connect(self.MS_HOST)
+        await self.route_connect(channel=self.channel, route=self.route, route_id=self.route_id)
         asyncio.create_task(self.sustain(route=self.route))
+
+    async def route_connect(self, channel, route, route_id):
+        await channel.connect(self.MS_HOST)
+        utc_now = int(datetime.now(timezone.utc).timestamp() * 1000)
+        req_connection = pb.ReqRequestConnection()
+        req_connection.type = 3
+        req_connection.route_id = route_id
+        req_connection.timestamp = utc_now
+        req_connection_result = await route.request_connection(req_connection)
+        if int(req_connection_result.error.ByteSize()) > 0:
+            await channel.close()
+            raise RuntimeError("request connection for route {} failed".format(route_id))
 
     async def sustain(self, route, ping_interval=4):
         '''
