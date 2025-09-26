@@ -8,6 +8,7 @@ import aiohttp
 import ms.protocol_pb2 as pb
 from ms.base import MSRPCChannel
 from ms.rpc import Lobby
+from ms.rpc import Route
 from websockets import State
 from websockets.exceptions import ConnectionClosedError
 
@@ -75,23 +76,27 @@ class MajsoulPaipuDownloader:
 
         self.channel = MSRPCChannel(self.endpoint)
         self.lobby = Lobby(self.channel)
+        self.route = Route(self.channel)
 
         await self.channel.connect(self.MS_HOST)
-        asyncio.create_task(self.sustain(lobby=self.lobby))
+        asyncio.create_task(self.sustain(route=self.route))
 
-    async def sustain(self, lobby, ping_interval=4):
+    async def sustain(self, route, ping_interval=4):
         '''
         Looping coroutine that keeps the connection to the server alive.
         '''
         try:
             #todo: recovery heartbeat task, temporary disable
-            while self.channel._ws.state != State.OPEN:
+            while self.channel._ws.state == State.OPEN:
                 # first ping ws socket
                 await self.channel._ws.ping()
                 # second call in-game heartbeat
-                req_heatbeat = pb.ReqHeatBeat()
-                req_heatbeat.no_operation_counter = 0
-                res_heatbeat = await lobby.heatbeat(req_heatbeat)
+                req_heartbeat = pb.ReqHeartbeat()
+                req_heartbeat.delay = 0
+                req_heartbeat.no_operation_counter = 0
+                req_heartbeat.platform = 11
+                req_heartbeat.network_quality = 0
+                res_heatbeat = await route.heartbeat(req_heartbeat)
                 if int(res_heatbeat.error.ByteSize()) > 0:
                     await self.channel.close()
                 await asyncio.sleep(ping_interval)
