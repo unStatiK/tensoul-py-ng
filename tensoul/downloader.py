@@ -9,7 +9,12 @@ import ms.protocol_pb2 as pb
 from ms.base import MSRPCChannel
 from ms.rpc import Lobby
 from ms.rpc import Route
-from websockets import State
+
+try:
+    from websockets import State
+except ImportError:
+    from websockets.protocol import State
+
 from websockets.exceptions import ConnectionClosedError
 from datetime import datetime, timezone
 
@@ -31,8 +36,9 @@ class MajsoulPaipuDownloader:
     MS_HOST = "https://game.maj-soul.com"
     MS_LOGIN_BEAT_CONTRACT_UUID = "DF2vkXCnfeXp4WoGSBGNcJBufZiMN3UP"
 
-    def __init__(self, tensoul_version="0.0.0"):
+    def __init__(self, with_http_server=False, tensoul_version="0.0.0"):
         self.tensoul_version = tensoul_version
+        self.with_http_server = with_http_server
 
     async def start(self):
         await self._connect()
@@ -80,7 +86,8 @@ class MajsoulPaipuDownloader:
         self.lobby = Lobby(self.channel)
         self.route = Route(self.channel)
         await self.route_connect(channel=self.channel, route=self.route, route_id=self.route_id)
-        asyncio.create_task(self.sustain(route=self.route))
+        if self.with_http_server:
+            asyncio.create_task(self.sustain(route=self.route))
 
     async def route_connect(self, channel, route, route_id):
         await channel.connect(self.MS_HOST)
@@ -207,7 +214,7 @@ class MajsoulPaipuDownloader:
             print("The API is GET /convert?id={mahjong_soul_log_id}")
         IOLoop.instance().start()
 
-    async def download(self, record_uuid: str, lobby_id: int):
+    async def download(self, record_uuid: str, lobby_id: int = 0):
         req = pb.ReqGameRecord()
         req.game_uuid = record_uuid
         req.client_version_string = f'web-{self.version_to_force}'

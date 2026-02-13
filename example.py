@@ -25,3 +25,4 @@ if __name__ == "__main__":
     os.makedirs("records", exist_ok=True)
     with open(f"records/{args.record}.json", "w", encoding="utf-8") as f:
         ujson.dump(logs, f, ensure_ascii=False)
+        print(f"record created in path: records/{args.record}.json")
