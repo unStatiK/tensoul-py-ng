@@ -11,7 +11,10 @@ APP_VERSION = "1.1.0"
 async def connect_and_serve():
     downloader = MajsoulPaipuDownloader(True, APP_VERSION)
     await downloader.start()
-    await downloader.login(ms_cfg['ms_username'], ms_cfg['ms_password'])
+    await downloader.login(ms_cfg['ms_username'],
+                           ms_cfg['ms_password'],
+                           ms_cfg['resource_version'],
+                           ms_cfg['package_version'])
     downloader.start_server(ms_cfg['server_host'], ms_cfg['server_port'])
 
 

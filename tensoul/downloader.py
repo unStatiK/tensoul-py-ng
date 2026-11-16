@@ -73,14 +73,14 @@ class MajsoulPaipuDownloader:
                 url = regions[region_index]["url"]
 
             async with session.get("{}/api/clientgate/routes?platform=Web&version={}".format(url, self.version)) as res:
-               routes = await res.json()
-               if "routes" in routes['data']:
-                   routes = routes['data']["routes"]
-                   server = random.choice(routes)
-                   self.endpoint = "wss://{}/gateway".format(server['domain'])
-                   self.route_id = str(server['id']).strip()
-               else:
-                   raise RuntimeError("Cannot detect endpoint. Response: " + await res.text())
+                routes = await res.json()
+                if "routes" in routes['data']:
+                    routes = routes['data']["routes"]
+                    server = random.choice(routes)
+                    self.endpoint = "wss://{}/gateway".format(server['domain'])
+                    self.route_id = str(server['id']).strip()
+                else:
+                    raise RuntimeError("Cannot detect endpoint. Response: " + await res.text())
 
         self.channel = MSRPCChannel(self.endpoint)
         self.lobby = Lobby(self.channel)
@@ -96,6 +96,7 @@ class MajsoulPaipuDownloader:
         req_connection.type = 3
         req_connection.route_id = route_id
         req_connection.timestamp = utc_now
+        req_connection.platform = "Web"
         req_connection_result = await route.request_connection(req_connection)
         if int(req_connection_result.error.ByteSize()) > 0:
             await channel.close()
@@ -127,17 +128,37 @@ class MajsoulPaipuDownloader:
         except Exception as e:
             print(f"Exception occurred in `sustain` task: {e}")
 
-    async def login(self, username, password):
+    async def login(self, username, password, resource_version, package_version):
         uuid_key = str(uuid.uuid1())
 
         req = pb.ReqLogin()
         req.account = username
         req.password = hmac.new(b"lailai", password.encode(), hashlib.sha256).hexdigest()
+        req.reconnect = False
+        req.device.platform = "pc"
+        req.device.hardware = "pc"
+        req.device.os = "windows"
+        req.device.os_version = "win10"
         req.device.is_browser = True
+        req.device.software = "Chrome"
+        req.device.sale_platform = "web"
+        req.device.screen_width = 2133
+        req.device.screen_height = 1103
+        req.device.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+        req.device.screen_type = 1
         req.random_key = uuid_key
         req.gen_access_token = True
-        req.client_version_string = f"web-{self.version_to_force}"
+        req.client_version_string = f"WebGL_2022-{resource_version}"
+        req.currency_platforms.append(1)
         req.currency_platforms.append(2)
+        req.currency_platforms.append(5)
+        req.currency_platforms.append(6)
+        req.currency_platforms.append(8)
+        req.currency_platforms.append(10)
+        req.currency_platforms.append(11)
+        req.tag = "cn"
+        req.client_version.resource = resource_version
+        req.client_version.package = package_version
 
         res = await self.lobby.login(req)
         token = res.access_token
@@ -164,6 +185,7 @@ class MajsoulPaipuDownloader:
         app = Flask(__name__)
         app_token = ms_cfg['app_token']
         is_token_auth = ms_cfg['is_token_auth']
+        resource_version = ms_cfg['resource_version']
         downloader = self
 
         def check_token(request):
@@ -201,7 +223,7 @@ class MajsoulPaipuDownloader:
             id = request.args.get('id')
             lobby_id = prepare_lobby_id(request.args.get('lobby_id'))
             if id:
-                response = asyncio.run(downloader.download(id, lobby_id))
+                response = asyncio.run(downloader.download(id, lobby_id, resource_version))
                 return make_json_response(response)
             return make_json_response(self.make_error_message("replay id required!"))
 
@@ -214,10 +236,10 @@ class MajsoulPaipuDownloader:
             print("The API is GET /convert?id={mahjong_soul_log_id}")
         IOLoop.instance().start()
 
-    async def download(self, record_uuid: str, lobby_id: int = 0):
+    async def download(self, record_uuid: str, lobby_id: int = 0, resource_version: str = None):
         req = pb.ReqGameRecord()
         req.game_uuid = record_uuid
-        req.client_version_string = f'web-{self.version_to_force}'
+        req.client_version_string = f"WebGL_2022-{resource_version}"
         res = await self.lobby.fetch_game_record(req)
 
         if res.error.code:
